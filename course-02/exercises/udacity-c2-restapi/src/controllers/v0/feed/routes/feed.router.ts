@@ -8,7 +8,7 @@ const router: Router = Router();
 // Get all feed items
 router.get('/', async (req: Request, res: Response) => {
     const items = await FeedItem.findAndCountAll({order: [['id', 'DESC']]});
-    items.rows.map((item) => {
+    items.rows.forEach(item => {
             if(item.url) {
                 item.url = AWS.getGetSignedUrl(item.url);
             }
@@ -18,14 +18,36 @@ router.get('/', async (req: Request, res: Response) => {
 
 //@TODO
 //Add an endpoint to GET a specific resource by Primary Key
+router.get("/:id", async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id as string;
+    const item = await FeedItem.findByPk(id);
+
+    if (item === null) {
+      return res.sendStatus(404);
+    }
+    return res.json(item);
+  } catch (e) {
+    return res.sendStatus(500);
+  }
+})
 
 // update a specific resource
-router.patch('/:id', 
-    requireAuth, 
-    async (req: Request, res: Response) => {
-        //@TODO try it yourself
-        res.send(500).send("not implemented")
-});
+router.patch('/:id',
+  requireAuth,
+  async (req: Request, res: Response) => {
+    //@TODO try it yourself
+    const id: string = req.params.id;
+    const body: FeedItem = req.body;
+    const currentItem = await FeedItem.findByPk(id);
+
+    if (currentItem === null) {
+      return res.sendStatus(404);
+    }
+
+    const newItem = await currentItem.update(body);
+    res.send(newItem);
+  });
 
 
 // Get a signed url to put a new item in the bucket
@@ -56,7 +78,7 @@ router.post('/',
         return res.status(400).send({ message: 'File url is required' });
     }
 
-    const item = await new FeedItem({
+    const item = new FeedItem({
             caption: caption,
             url: fileName
     });
