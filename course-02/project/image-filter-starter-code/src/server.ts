@@ -1,12 +1,12 @@
-import express from 'express';
+import express, {Express, Request, Response} from 'express';
 import ImageFilteredController from './controller/index';
 import helmet from "helmet";
 
 // Init the Express application
-const app = express();
+const app: Express = express();
 
 // Set the network port
-const port = process.env.PORT || 8082;
+const port: number = parseInt(process.env.PORT) || 8082;
 
 // Use the body parser middleware for post requests
 app.use(express.json());
@@ -31,7 +31,7 @@ app.get("/filteredimage", ImageFilteredController)
 
 // Root Endpoint
 // Displays a simple message to the user
-app.get("/", (req, res) => {
+app.get("/", (req: Request, res: Response) => {
   res.send("try GET /filteredimage?image_url={{}}")
 });
 

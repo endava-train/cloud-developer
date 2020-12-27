@@ -1,4 +1,3 @@
-import fs from 'fs';
 import Jimp = require('jimp');
 
 // filterImageFromURL
@@ -9,21 +8,10 @@ import Jimp = require('jimp');
 // RETURNS
 //    an absolute path to a filtered image locally saved file
 export async function filterImageFromURL(inputURL: string): Promise<Buffer> {
-  const photo = await Jimp.read(inputURL);
+  const photo: Jimp = await Jimp.read(inputURL);
   return photo
     .resize(256, 256) // resize
     .quality(60) // set JPEG quality
     .greyscale() // set greyscale
     .getBufferAsync(photo.getMIME());
-}
-
-// deleteLocalFiles
-// helper function to delete files on the local disk
-// useful to cleanup after tasks
-// INPUTS
-//    files: Array<string> an array of absolute paths to files
-export async function deleteLocalFiles(files:Array<string>){
-    for( let file of files) {
-        fs.unlinkSync(file);
-    }
 }
