@@ -10,3 +10,9 @@ jspm_packages
 
 # Local DynamoDb
 .dynamodb
+
+# Local DynamoDb
+.vscode
+
+# Local DynamoDb
+.idea
