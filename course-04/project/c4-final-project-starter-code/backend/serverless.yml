@@ -5,8 +5,6 @@ plugins:
   - serverless-iam-roles-per-function
   - serverless-dynamodb-local
   - serverless-offline
-#package:
-#  individually: true
 
 provider:
   name: aws
@@ -25,6 +23,9 @@ provider:
   apiGateway:
     shouldStartNameWithService: true
 
+  tracing:
+    apiGateway: true
+    lambda: true
 custom:
   dynamodb:
     stages:
@@ -125,6 +126,7 @@ functions:
       - Effect: Allow
         Action:
           - dynamodb:GetItem
+          - dynamodb:UpdateItem
         Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
 
 resources:
