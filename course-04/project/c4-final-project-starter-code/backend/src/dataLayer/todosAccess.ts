@@ -2,6 +2,7 @@ import {DocumentClient} from 'aws-sdk/clients/dynamodb';
 import {TodoItem} from "../models/TodoItem";
 import * as AWS from 'aws-sdk';
 import {getLogger} from "../utils/logger";
+import * as AWSXRay from 'aws-xray-sdk';
 
 const log = getLogger();
 
@@ -15,13 +16,14 @@ export interface TodosAccess {
 
 class TodosAccessImp implements TodosAccess {
   constructor(
-    private readonly docClient: DocumentClient = new AWS.DynamoDB.DocumentClient(),
+    private readonly docClient: DocumentClient = createDynamoDBClient(),
     private readonly todosTable: string = process.env.TODOS_TABLE,
-  ) {}
+  ) {
+  }
 
   async getById(userId: string, todoId: string): Promise<TodoItem> {
     const params = { todoId, userId };
-    log.info(`getById params: ${JSON.stringify(params)}`);
+    log.info(`getById params: ${JSON.stringify(params, null, 4)}`);
     const result = await this.docClient.get({
       TableName: this.todosTable,
       Key: { todoId, userId },
@@ -31,6 +33,7 @@ class TodosAccessImp implements TodosAccess {
   }
 
   async getAll(userId: string): Promise<TodoItem[]> {
+    log.info(`getAll params: ${JSON.stringify(userId, null, 4)}`);
     const result = await this.docClient
       .query({
         TableName: this.todosTable,
@@ -46,6 +49,7 @@ class TodosAccessImp implements TodosAccess {
   }
 
   async create(todoItem: TodoItem): Promise<TodoItem> {
+    log.info(`create params: ${JSON.stringify(todoItem, null, 4)}`);
     await this.docClient.put({
       TableName: this.todosTable,
       Item: todoItem
@@ -59,7 +63,7 @@ class TodosAccessImp implements TodosAccess {
     const result = await this.docClient.update({
       TableName: this.todosTable,
       Key: { todoId: todoItem.todoId, userId: todoItem.userId },
-      UpdateExpression: "set #nm = :name, dueDate = :dueDate, done = :done",
+      UpdateExpression: "set #nm = :name, dueDate = :dueDate, done = :done, attachmentUrl = :attachmentUrl",
       ExpressionAttributeNames: {
         '#nm': 'name',
       },
@@ -67,11 +71,12 @@ class TodosAccessImp implements TodosAccess {
         ':name': todoItem.name,
         ':dueDate': todoItem.dueDate,
         ':done': todoItem.done,
+        ':attachmentUrl': todoItem.attachmentUrl,
       },
       ReturnValues: "UPDATED_NEW",
     }).promise();
 
-    log.info("result" + String(result));
+    log.info("updateAccess: result" + JSON.stringify({result}, null, 4));
 
     return todoItem;
   }
@@ -92,6 +97,20 @@ class TodosAccessImp implements TodosAccess {
     return true;
   }
 }
+
+function createDynamoDBClient() {
+  const XAWS = AWSXRay.captureAWS(AWS);
+  if (process.env.IS_OFFLINE) {
+    log.info('Creating a local DynamoDB instance');
+    return new XAWS.DynamoDB.DocumentClient({
+      region: 'localhost',
+      endpoint: 'http://localhost:8000',
+    });
+  }
+
+  return new XAWS.DynamoDB.DocumentClient();
+}
+
 
 
 const todosAccess: TodosAccess = new TodosAccessImp();

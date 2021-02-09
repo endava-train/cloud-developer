@@ -15,6 +15,7 @@ const main: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent): Promis
   log.info(`deleteTodo with input userId: ${userId} and todoId: ${todoId}`);
 
   const isSuccessful = await todosLogic.delete(userId, todoId);
+  log.info(`generateUploadURL: Successful operation ${JSON.stringify({isSuccessful}, null, 4)}`);
   if (!isSuccessful) {
     return {
       statusCode: StatusCodes.INTERNAL_SERVER_ERROR,

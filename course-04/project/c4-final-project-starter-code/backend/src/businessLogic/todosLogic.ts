@@ -26,11 +26,13 @@ class TodosLogicImp implements TodosLogic {
 
 
   async getAll(userId: string): Promise<TodoItem[]> {
+    log.info(`getAll with input userId: ${userId}`);
     return this.todosAccess.getAll(userId);
   }
 
   async create(createTodoRequest: CreateTodoRequest, userId: string): Promise<TodoItem> {
     const todoId = uuid.v4();
+    log.info(`create with input userId: ${JSON.stringify({createTodoRequest, todoId, userId}, null, 4)}`);
     return await this.todosAccess.create({
       userId: userId,
       todoId,
@@ -38,7 +40,6 @@ class TodosLogicImp implements TodosLogic {
       name: createTodoRequest.name,
       dueDate: createTodoRequest.dueDate,
       done: false,
-      attachmentUrl: `https://${this.bucketName}.s3.amazonaws.com/${todoId}`,
     });
   }
 
@@ -63,16 +64,23 @@ class TodosLogicImp implements TodosLogic {
 
   async updateImage(userId: string, todoId: string): Promise<UploadURL | boolean> {
     const isValid = await this.validateUser(userId, todoId);
+    log.info(`updateImage User is valid: ${isValid}`);
     if (!isValid) {
       return false;
     }
 
-    return this.imagesLogic.uploadUrl(todoId);
+    const result = await this.imagesLogic.uploadUrl(todoId);
+    log.info("updating the field");
+    const currentTodo = await this.todosAccess.getById(userId, todoId);
+    currentTodo.attachmentUrl = `https://${this.bucketName}.s3.amazonaws.com/${todoId}`
+    await this.todosAccess.update(currentTodo);
+    return result;
   }
 
   async delete(userId: string, todoId: string): Promise<boolean> {
     log.info(`deleteLogic userId: ${userId}, todoId: ${todoId}`);
     const isValid = await this.validateUser(userId, todoId);
+    log.info(`delete User is valid: ${isValid}`);
     if (!isValid) {
       return isValid;
     }

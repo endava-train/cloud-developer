@@ -24,6 +24,7 @@ export const main: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent):
     };
   }
 
+  log.info("Successful operations");
   return {
     statusCode: StatusCodes.OK,
     body: ''
